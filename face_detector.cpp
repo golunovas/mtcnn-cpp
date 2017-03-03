@@ -41,7 +41,7 @@ std::vector<Face> FaceDetector::detect(cv::Mat img, float minFaceSize, float sca
 		cv::cvtColor(img, rgbImg, CV_BGRA2RGB);
 	}
 	if (rgbImg.empty()) {
-		return;
+		return std::vector<Face>();
 	}
 	rgbImg.convertTo(rgbImg, CV_32FC3);
 	rgbImg = rgbImg.t();
@@ -49,7 +49,13 @@ std::vector<Face> FaceDetector::detect(cv::Mat img, float minFaceSize, float sca
 	faces = step2(rgbImg, faces);
 	faces = step3(rgbImg, faces);
 	for (size_t i = 0; i < faces.size(); ++i) {
-		drawAndShowRectangle(rgbImg, faces[i].bbox.getRect());
+		BBox recoveredBBox;
+		recoveredBBox.x1 = faces[i].bbox.y2;
+		recoveredBBox.x2 = faces[i].bbox.y1;
+		recoveredBBox.y1 = faces[i].bbox.x2;
+		recoveredBBox.y2 = faces[i].bbox.x1;
+		faces[i].bbox = recoveredBBox;
+		drawAndShowRectangle(img, faces[i].bbox.getRect());
 	}
 	return faces;
 }
