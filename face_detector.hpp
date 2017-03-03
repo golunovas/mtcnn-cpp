@@ -6,6 +6,9 @@
 #include <caffe/caffe.hpp>
 #include <opencv2/opencv.hpp>
 
+const int NUM_REGRESSIONS = 4;
+const int NUM_PTS = 5;
+
 struct BBox {
 	float x1;
 	float y1;
@@ -17,9 +20,9 @@ struct BBox {
 
 struct Face {
 	BBox bbox;
-	float regression[4]; // TODO: no hard-coded numbers
+	float regression[NUM_REGRESSIONS];
 	float score;
-	float ptsCoords[10]; // TODO: no hard-coded numbers
+	float ptsCoords[2 * NUM_PTS];
 	
 	static void applyRegression(std::vector<Face>& faces);
 	static void bboxes2Squares(std::vector<Face>& faces);
