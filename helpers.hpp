@@ -3,25 +3,19 @@
 
 #include <opencv2/opencv.hpp>
 
-inline cv::Mat cropAndResizeImage(cv::Mat img, cv::Rect r, cv::Size size) {
-	// TODO: Remove redundant vars
-	int rx = r.x;
-	int ry = r.y;
-	int rw = r.width;
-	int rh = r. height;
-	cv::Mat m = cv::Mat::zeros(rh, rw, img.type());
-	int dx = std::abs(std::min(0, rx));
-	if (dx > 0) { rx = 0; }
-	rw -= dx;
-	int dy = std::abs(std::min(0, ry));
-	if (dy > 0) { ry = 0; }	
-	rh -= dy;
-	int dw = std::abs(std::min(0, img.cols - 1 - (rx + rw)));
-	rw -= dw;
-	int dh = std::abs(std::min(0, img.rows - 1 - (ry + rh)));
-	rh -= dh;
-	img(cv::Range(ry, ry + rh), cv::Range(rx, rx + rw)).copyTo(m(cv::Range(dy, dy + rh), cv::Range(dx, dx + rw)));
-	cv::resize(m, m, size);
+inline cv::Mat cropImage(cv::Mat img, cv::Rect r) {
+	cv::Mat m = cv::Mat::zeros(r.height, r.width, img.type());
+	int dx = std::abs(std::min(0, r.x));
+	if (dx > 0) { r.x = 0; }
+	r.width -= dx;
+	int dy = std::abs(std::min(0, r.y));
+	if (dy > 0) { r.y = 0; }	
+	r.height -= dy;
+	int dw = std::abs(std::min(0, img.cols - 1 - (r.x + r.width)));
+	r.width -= dw;
+	int dh = std::abs(std::min(0, img.rows - 1 - (r.y + r.height)));
+	r.height -= dh;
+	img(r).copyTo(m(cv::Range(dy, dy + r.height), cv::Range(dx, dx + r.width)));
 	return m;
 }
 

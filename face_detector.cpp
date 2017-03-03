@@ -101,7 +101,8 @@ std::vector<Face> FaceDetector::step2(cv::Mat img, const std::vector<Face>& face
 	std::vector<Face> finalFaces;
 	cv::Size windowSize = cv::Size(rNet_->input_blobs()[0]->width(), rNet_->input_blobs()[0]->height());
 	for (size_t i = 0; i < faces.size(); ++i) {
-		cv::Mat sample = cropAndResizeImage(img, faces[i].bbox.getRect(), windowSize);
+		cv::Mat sample = cropImage(img, faces[i].bbox.getRect());
+		cv::resize(sample, sample, windowSize);
 		initNetInput(rNet_, sample);
 		rNet_->Forward();
 		const caffe::Blob<float>* regressionBlob = rNet_->blob_by_name(R_NET_REGRESSION_BLOB_NAME).get();
@@ -131,7 +132,8 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 	std::vector<Face> finalFaces;
 	cv::Size windowSize = cv::Size(oNet_->input_blobs()[0]->width(), oNet_->input_blobs()[0]->height());
 	for (size_t i = 0; i < faces.size(); ++i) {
-		cv::Mat sample = cropAndResizeImage(img, faces[i].bbox.getRect(), windowSize);
+		cv::Mat sample = cropImage(img, faces[i].bbox.getRect());
+		cv::resize(sample, sample, windowSize);
 		initNetInput(oNet_, sample);
 		oNet_->Forward();
 		const caffe::Blob<float>* regressionBlob = oNet_->blob_by_name(O_NET_REGRESSION_BLOB_NAME).get();
