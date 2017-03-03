@@ -50,10 +50,10 @@ std::vector<Face> FaceDetector::detect(cv::Mat img, float minFaceSize, float sca
 	faces = step3(rgbImg, faces);
 	for (size_t i = 0; i < faces.size(); ++i) {
 		BBox recoveredBBox;
-		recoveredBBox.x1 = faces[i].bbox.y2;
-		recoveredBBox.x2 = faces[i].bbox.y1;
-		recoveredBBox.y1 = faces[i].bbox.x2;
-		recoveredBBox.y2 = faces[i].bbox.x1;
+		recoveredBBox.x1 = faces[i].bbox.y1;
+		recoveredBBox.x2 = faces[i].bbox.y2;
+		recoveredBBox.y1 = faces[i].bbox.x1;
+		recoveredBBox.y2 = faces[i].bbox.x2;
 		faces[i].bbox = recoveredBBox;
 		drawAndShowRectangle(img, faces[i].bbox.getRect());
 	}
