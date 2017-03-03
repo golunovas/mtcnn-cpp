@@ -27,7 +27,13 @@ const float O_THRESHOLD = 0.7f;
 const float IMG_MEAN = 127.5f;
 const float IMG_INV_STDDEV = 0.0078125f;
 
-FaceDetector::FaceDetector(const std::string& modelDir) {
+FaceDetector::FaceDetector(const std::string& modelDir, bool useGPU, int deviceID) {
+	if (useGPU) {
+		caffe::Caffe::set_mode(caffe::Caffe::GPU);
+		caffe::Caffe::SetDevice(deviceID);
+	} else {
+		caffe::Caffe::set_mode(caffe::Caffe::CPU);
+	}
 	pNet_.reset( new caffe::Net<float> (modelDir + P_NET_PROTO, caffe::TEST) );
     pNet_->CopyTrainedLayersFrom(modelDir + P_NET_WEIGHTS);
     rNet_.reset( new caffe::Net<float> (modelDir + R_NET_PROTO, caffe::TEST) );

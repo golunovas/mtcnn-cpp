@@ -2,7 +2,7 @@
 #include "helpers.hpp"
 
 int main(int argc, char** argv) {
-	mtcnn::FaceDetector fd("./model/");
+	mtcnn::FaceDetector fd("./model/", true, 0);
 	cv::Mat img = cv::imread("test.jpg");
 	std::vector<mtcnn::Face> faces = fd.detect(img, 40.f, 0.709f);
 	for (size_t i = 0; i < faces.size(); ++i) {

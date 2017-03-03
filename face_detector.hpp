@@ -44,7 +44,7 @@ private:
 										   const caffe::Blob<float>* scoresBlob,
 										   float scale);
 public:
-	FaceDetector(const std::string& modelDir);
+	FaceDetector(const std::string& modelDir, bool useGPU = true, int deviceID = 0);
 	std::vector<Face> detect(cv::Mat img, float minFaceSize, float scaleFactor);
 };
 
