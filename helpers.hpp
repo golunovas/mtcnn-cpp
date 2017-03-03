@@ -19,7 +19,7 @@ inline cv::Mat cropImage(cv::Mat img, cv::Rect r) {
 	return m;
 }
 
-void drawAndShowRectangle(cv::Mat img, cv::Rect r) {
+inline void drawAndShowRectangle(cv::Mat img, cv::Rect r) {
 	// TODO check type
 	cv::Mat outImg;
 	img.convertTo(outImg, CV_8UC3);
