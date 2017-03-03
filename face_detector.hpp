@@ -35,10 +35,13 @@ private:
 	boost::shared_ptr< caffe::Net<float> > pNet_;
     boost::shared_ptr< caffe::Net<float> > rNet_;
 	boost::shared_ptr< caffe::Net<float> > oNet_;
+	boost::shared_ptr< caffe::Net<float> > lNet_;
 	void initNetInput(boost::shared_ptr< caffe::Net<float> > net, cv::Mat img);
+	void initNetInput(boost::shared_ptr< caffe::Net<float> > net, std::vector<cv::Mat>& imgs);
 	std::vector<Face> step1(cv::Mat img, float minFaceSize, float scaleFactor);
 	std::vector<Face> step2(cv::Mat img, const std::vector<Face>& faces);
 	std::vector<Face> step3(cv::Mat img, const std::vector<Face>& faces);
+	std::vector<Face> step4(cv::Mat img, const std::vector<Face>& faces);
 	static std::vector<Face> nonMaximumSuppression(std::vector<Face> faces, float threshold, bool useMin = false);
 	static std::vector<Face> composeFaces(const caffe::Blob<float>* regressionsBlob, 
 										   const caffe::Blob<float>* scoresBlob,
