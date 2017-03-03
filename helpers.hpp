@@ -1,7 +1,21 @@
 #ifndef _HELPERS_HPP_
 #define _HELPERS_HPP_
 
+#include <chrono>
 #include <opencv2/opencv.hpp>
+
+class Timer {
+private:
+	std::chrono::time_point<std::chrono::system_clock> t1;
+public:
+	inline void start() {
+		t1 = std::chrono::system_clock::now();
+	} 
+	inline double stop() {
+		auto t2 = std::chrono::system_clock::now();
+		return std::chrono::duration_cast<std::chrono::milliseconds>(t2 - t1).count();
+	}
+};
 
 inline cv::Mat cropImage(cv::Mat img, cv::Rect r) {
 	cv::Mat m = cv::Mat::zeros(r.height, r.width, img.type());
