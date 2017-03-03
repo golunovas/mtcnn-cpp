@@ -19,6 +19,7 @@ const std::string O_NET_PROTO = "/det3.prototxt";
 const std::string O_NET_WEIGHTS = "/det3.caffemodel";
 const std::string O_NET_REGRESSION_BLOB_NAME = "conv6-2";
 const std::string O_NET_SCORE_BLOB_NAME = "prob1";
+const std::string O_NET_PTS_BLOB_NAME = "conv6-3";
 const float O_THRESHOLD = 0.7f;
 
 const float IMG_MEAN = 127.5f;
@@ -55,7 +56,11 @@ std::vector<Face> FaceDetector::detect(cv::Mat img, float minFaceSize, float sca
 		recoveredBBox.y1 = faces[i].bbox.x1;
 		recoveredBBox.y2 = faces[i].bbox.x2;
 		faces[i].bbox = recoveredBBox;
-		drawAndShowRectangle(img, faces[i].bbox.getRect());
+		for (int p = 0; p < NUM_PTS; ++p) {
+			float tmp = faces[i].ptsCoords[2 * p + 1];
+			faces[i].ptsCoords[2 * p + 1] = faces[i].ptsCoords[2 * p];
+			faces[i].ptsCoords[2 * p] = tmp;
+		}
 	}
 	return faces;
 }
@@ -146,6 +151,7 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 		oNet_->Forward();
 		const caffe::Blob<float>* regressionBlob = oNet_->blob_by_name(O_NET_REGRESSION_BLOB_NAME).get();
 		const caffe::Blob<float>* scoreBlob = oNet_->blob_by_name(O_NET_SCORE_BLOB_NAME).get();
+		const caffe::Blob<float>* ptsBlob = oNet_->blob_by_name(O_NET_PTS_BLOB_NAME).get();
 		float score = scoreBlob->cpu_data()[1];
 		if (score < O_THRESHOLD) {
 			continue;
@@ -157,6 +163,11 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 		face.regression[2] = regressionData[2];
 		face.regression[3] = regressionData[3];
 		face.score = score;
+		const float* ptsData = ptsBlob->cpu_data();
+		for (int p = 0; p < NUM_PTS; ++p) {
+			face.ptsCoords[2 * p + 1] = face.bbox.y1 + ptsData[p] * (face.bbox.y2 - face.bbox.y1) - 1;
+			face.ptsCoords[2 * p] = face.bbox.x1 + ptsData[p + NUM_PTS] * (face.bbox.x2 - face.bbox.x1) - 1;
+		}
 		finalFaces.push_back(face);
 	}
 	Face::applyRegression(finalFaces);

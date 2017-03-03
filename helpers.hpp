@@ -19,11 +19,14 @@ inline cv::Mat cropImage(cv::Mat img, cv::Rect r) {
 	return m;
 }
 
-inline void drawAndShowRectangle(cv::Mat img, cv::Rect r) {
+inline void drawAndShowFace(cv::Mat img, cv::Rect r, const std::vector<cv::Point>& pts) {
 	// TODO check type
 	cv::Mat outImg;
 	img.convertTo(outImg, CV_8UC3);
-	cv::rectangle(outImg, r, cv::Scalar(0,0, 255));
+	cv::rectangle(outImg, r, cv::Scalar(0, 0, 255));
+	for (size_t i = 0; i < pts.size(); ++i) {
+		cv::circle(outImg, pts[i], 3, cv::Scalar(0, 0, 255));
+	}
 	cv::imshow("test", outImg);
 	cv::waitKey(0);
 }
