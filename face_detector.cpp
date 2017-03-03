@@ -33,7 +33,7 @@ FaceDetector::FaceDetector(const std::string& modelDir) {
 	oNet_->CopyTrainedLayersFrom(modelDir + O_NET_WEIGHTS);
 }
 
-void FaceDetector::detect(cv::Mat img, float minFaceSize, float scaleFactor) {
+std::vector<Face> FaceDetector::detect(cv::Mat img, float minFaceSize, float scaleFactor) {
 	cv::Mat rgbImg;
 	if (img.channels() == 3) {
 		cv::cvtColor(img, rgbImg, CV_BGR2RGB);
@@ -51,6 +51,7 @@ void FaceDetector::detect(cv::Mat img, float minFaceSize, float scaleFactor) {
 	for (size_t i = 0; i < faces.size(); ++i) {
 		drawAndShowRectangle(rgbImg, faces[i].bbox.getRect());
 	}
+	return faces;
 }
 
 void FaceDetector::initNetInput(boost::shared_ptr< caffe::Net<float> > net, cv::Mat img) {

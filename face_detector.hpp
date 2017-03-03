@@ -43,7 +43,7 @@ private:
 										   float scale);
 public:
 	FaceDetector(const std::string& modelDir);
-	void detect(cv::Mat img, float minFaceSize, float scaleFactor);
+	std::vector<Face> detect(cv::Mat img, float minFaceSize, float scaleFactor);
 };
 
 #endif // _FACE_DETECTOR_HPP_
