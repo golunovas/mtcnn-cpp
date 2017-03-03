@@ -80,8 +80,8 @@ std::vector<Face> FaceDetector::step1(cv::Mat img, float minFaceSize, float scal
 		pNet_->Forward();
 		const caffe::Blob<float>* regressionsBlob = pNet_->blob_by_name(P_NET_REGRESSION_BLOB_NAME).get();
 		const caffe::Blob<float>* scoresBlob = pNet_->blob_by_name(P_NET_SCORE_BLOB_NAME).get();
-		std::vector<Face> faces = composeFaces(regressionsBlob, scoresBlob, currentScale);
-		std::vector<Face> facesNMS = nonMaximumSuppression(faces, 0.5f);
+		std::vector<Face> faces = FaceDetector::composeFaces(regressionsBlob, scoresBlob, currentScale);
+		std::vector<Face> facesNMS = FaceDetector::nonMaximumSuppression(faces, 0.5f);
 		
 		if (!facesNMS.empty()) {
 			finalFaces.insert(finalFaces.end(), facesNMS.begin(), facesNMS.end()); 
@@ -91,7 +91,7 @@ std::vector<Face> FaceDetector::step1(cv::Mat img, float minFaceSize, float scal
 	if (finalFaces.empty()) {
 		return finalFaces;
 	}
-	finalFaces = nonMaximumSuppression(finalFaces, 0.7f);
+	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f);
 	Face::applyRegression(finalFaces);
 	Face::bboxes2Squares(finalFaces);
 	return finalFaces;
@@ -123,7 +123,7 @@ std::vector<Face> FaceDetector::step2(cv::Mat img, const std::vector<Face>& face
 	if (finalFaces.empty()) {
 		return finalFaces;
 	}
-	finalFaces = nonMaximumSuppression(finalFaces, 0.7f);
+	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f);
 	Face::applyRegression(finalFaces);
 	Face::bboxes2Squares(finalFaces);
 }
@@ -155,7 +155,7 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 		return finalFaces;
 	}
 	Face::applyRegression(finalFaces);
-	finalFaces = nonMaximumSuppression(finalFaces, 0.7f, true);
+	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f, true);
 	Face::bboxes2Squares(finalFaces);
 }
 
@@ -244,11 +244,11 @@ cv::Rect BBox::getRect() const {
 
 BBox BBox::getSquare() const {
 	BBox bbox;
-    float newBBoxWidth = x2 - x1;
-    float newBBoxHeight = y2 - y1;
-    float side = std::max(newBBoxWidth, newBBoxHeight);
-    bbox.x1 = x1 + (newBBoxWidth - side) * 0.5f;
-    bbox.y1 = y1 + (newBBoxHeight - side) * 0.5f;
+    float bboxWidth = x2 - x1;
+    float bboxHeight = y2 - y1;
+    float side = std::max(bboxWidth, bboxHeight);
+    bbox.x1 = x1 + (bboxWidth - side) * 0.5f;
+    bbox.y1 = y1 + (bboxHeight - side) * 0.5f;
     bbox.x2 = bbox.x1 + side;
     bbox.y2 = bbox.y1 + side;
     return bbox;

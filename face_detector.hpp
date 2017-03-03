@@ -34,10 +34,10 @@ private:
 	std::vector<Face> step1(cv::Mat img, float minFaceSize, float scaleFactor);
 	std::vector<Face> step2(cv::Mat img, const std::vector<Face>& faces);
 	std::vector<Face> step3(cv::Mat img, const std::vector<Face>& faces);
+	static std::vector<Face> nonMaximumSuppression(std::vector<Face> faces, float threshold, bool useMin = false);
 	static std::vector<Face> composeFaces(const caffe::Blob<float>* regressionsBlob, 
 										   const caffe::Blob<float>* scoresBlob,
 										   float scale);
-	std::vector<Face> nonMaximumSuppression(std::vector<Face> faces, float threshold, bool useMin = false);
 public:
 	FaceDetector(const std::string& modelDir);
 	void detect(cv::Mat img, float minFaceSize, float scaleFactor);
