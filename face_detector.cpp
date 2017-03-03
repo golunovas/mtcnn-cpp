@@ -95,9 +95,6 @@ std::vector<Face> FaceDetector::step1(cv::Mat img, float minFaceSize, float scal
 		}
 		faceSize /= scaleFactor;
 	}
-	if (finalFaces.empty()) {
-		return finalFaces;
-	}
 	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f);
 	Face::applyRegression(finalFaces);
 	Face::bboxes2Squares(finalFaces);
@@ -127,12 +124,10 @@ std::vector<Face> FaceDetector::step2(cv::Mat img, const std::vector<Face>& face
 		face.score = score;
 		finalFaces.push_back(face);
 	}
-	if (finalFaces.empty()) {
-		return finalFaces;
-	}
 	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f);
 	Face::applyRegression(finalFaces);
 	Face::bboxes2Squares(finalFaces);
+	return finalFaces;
 }
 
 std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& faces) {
@@ -158,12 +153,10 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 		face.score = score;
 		finalFaces.push_back(face);
 	}
-	if (finalFaces.empty()) {
-		return finalFaces;
-	}
 	Face::applyRegression(finalFaces);
 	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f, true);
 	Face::bboxes2Squares(finalFaces);
+	return finalFaces;
 }
 
 std::vector<Face> FaceDetector::nonMaximumSuppression(std::vector<Face> faces, float threshold, bool useMin) {
@@ -194,8 +187,10 @@ std::vector<Face> FaceDetector::nonMaximumSuppression(std::vector<Face> faces, f
             float bboxHeight = std::max(0.f, (interY2 - interY1 + 1));
             
             float interArea = bboxWidth * bboxHeight;
-            float area1 = (faces[idx].bbox.x2 - faces[idx].bbox.x1 + 1) * (faces[idx].bbox.y2 - faces[idx].bbox.y1 + 1);
-            float area2 = (faces[tmpIdx].bbox.x2 - faces[tmpIdx].bbox.x1 + 1) * (faces[tmpIdx].bbox.y2 - faces[tmpIdx].bbox.y1 + 1);
+            float area1 = (faces[idx].bbox.x2 - faces[idx].bbox.x1 + 1) * 
+            				(faces[idx].bbox.y2 - faces[idx].bbox.y1 + 1);
+            float area2 = (faces[tmpIdx].bbox.x2 - faces[tmpIdx].bbox.x1 + 1) * 
+            				(faces[tmpIdx].bbox.y2 - faces[tmpIdx].bbox.y1 + 1);
             float o = 0;
             if (useMin) {
             	o = interArea / std::min(area1, area2);           
