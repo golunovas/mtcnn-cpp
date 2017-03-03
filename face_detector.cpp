@@ -1,4 +1,3 @@
-#include <iostream>
 #include "face_detector.hpp"
 #include "helpers.hpp"
 
