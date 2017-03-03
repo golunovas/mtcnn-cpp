@@ -1,6 +1,8 @@
 #include "face_detector.hpp"
 #include "helpers.hpp"
 
+namespace mtcnn {
+
 const std::string P_NET_PROTO = "/det1.prototxt";
 const std::string P_NET_WEIGHTS = "/det1.caffemodel";
 const std::string P_NET_REGRESSION_BLOB_NAME = "conv4-2";
@@ -289,3 +291,5 @@ void Face::bboxes2Squares(std::vector<Face>& faces) {
 		faces[i].bbox = faces[i].bbox.getSquare();
 	}
 }
+
+} // namespace mtcnn

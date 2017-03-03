@@ -6,6 +6,8 @@
 #include <caffe/caffe.hpp>
 #include <opencv2/opencv.hpp>
 
+namespace mtcnn {
+
 const int NUM_REGRESSIONS = 4;
 const int NUM_PTS = 5;
 
@@ -45,5 +47,7 @@ public:
 	FaceDetector(const std::string& modelDir);
 	std::vector<Face> detect(cv::Mat img, float minFaceSize, float scaleFactor);
 };
+
+} // namespace mtcnn
 
 #endif // _FACE_DETECTOR_HPP_
