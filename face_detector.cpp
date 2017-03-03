@@ -8,21 +8,18 @@ const std::string P_NET_WEIGHTS = "/det1.caffemodel";
 const std::string P_NET_REGRESSION_BLOB_NAME = "conv4-2";
 const std::string P_NET_SCORE_BLOB_NAME = "prob1";
 const float P_NET_WINDOW_SIDE = 12.f;
-const float P_THRESHOLD = 0.6f;
 const int P_NET_STRIDE = 2;
 
 const std::string R_NET_PROTO = "/det2.prototxt";
 const std::string R_NET_WEIGHTS = "/det2.caffemodel";
 const std::string R_NET_REGRESSION_BLOB_NAME = "conv5-2";
 const std::string R_NET_SCORE_BLOB_NAME = "prob1";
-const float R_THRESHOLD = 0.7f;
 
 const std::string O_NET_PROTO = "/det3.prototxt";
 const std::string O_NET_WEIGHTS = "/det3.caffemodel";
 const std::string O_NET_REGRESSION_BLOB_NAME = "conv6-2";
 const std::string O_NET_SCORE_BLOB_NAME = "prob1";
 const std::string O_NET_PTS_BLOB_NAME = "conv6-3";
-const float O_THRESHOLD = 0.7f;
 
 const std::string L_NET_PROTO = "/det4.prototxt";
 const std::string L_NET_WEIGHTS = "/det4.caffemodel";
@@ -31,7 +28,12 @@ const float L_THRESHOLD = 0.35f;
 const float IMG_MEAN = 127.5f;
 const float IMG_INV_STDDEV = 0.0078125f;
 
-FaceDetector::FaceDetector(const std::string& modelDir, bool useGPU, int deviceID) {
+FaceDetector::FaceDetector(const std::string& modelDir, 
+						   float pThreshold, 
+						   float rThreshold, 
+						   float oThreshold, 
+						   bool useGPU, 
+						   int deviceID) : pThreshold_(pThreshold), rThreshold_(rThreshold), oThreshold_(oThreshold){
 	if (useGPU) {
 		caffe::Caffe::set_mode(caffe::Caffe::GPU);
 		caffe::Caffe::SetDevice(deviceID);
@@ -128,7 +130,7 @@ std::vector<Face> FaceDetector::step1(cv::Mat img, float minFaceSize, float scal
 		pNet_->Forward();
 		const caffe::Blob<float>* regressionsBlob = pNet_->blob_by_name(P_NET_REGRESSION_BLOB_NAME).get();
 		const caffe::Blob<float>* scoresBlob = pNet_->blob_by_name(P_NET_SCORE_BLOB_NAME).get();
-		std::vector<Face> faces = FaceDetector::composeFaces(regressionsBlob, scoresBlob, currentScale);
+		std::vector<Face> faces = composeFaces(regressionsBlob, scoresBlob, currentScale);
 		std::vector<Face> facesNMS = FaceDetector::nonMaximumSuppression(faces, 0.5f);
 		
 		if (!facesNMS.empty()) {
@@ -153,7 +155,7 @@ std::vector<Face> FaceDetector::step2(cv::Mat img, const std::vector<Face>& face
 		const caffe::Blob<float>* regressionBlob = rNet_->blob_by_name(R_NET_REGRESSION_BLOB_NAME).get();
 		const caffe::Blob<float>* scoreBlob = rNet_->blob_by_name(R_NET_SCORE_BLOB_NAME).get();
 		float score = scoreBlob->cpu_data()[1];
-		if (score < R_THRESHOLD) {
+		if (score < rThreshold_) {
 			continue;
 		}
 		const float* regressionData = regressionBlob->cpu_data();
@@ -183,7 +185,7 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 		const caffe::Blob<float>* scoreBlob = oNet_->blob_by_name(O_NET_SCORE_BLOB_NAME).get();
 		const caffe::Blob<float>* ptsBlob = oNet_->blob_by_name(O_NET_PTS_BLOB_NAME).get();
 		float score = scoreBlob->cpu_data()[1];
-		if (score < O_THRESHOLD) {
+		if (score < oThreshold_) {
 			continue;
 		}
 		const float* regressionData = regressionBlob->cpu_data();
@@ -303,7 +305,7 @@ std::vector<Face> FaceDetector::composeFaces(const caffe::Blob<float>* regressio
 	for (int y = 0; y < height; ++y) {
 		for (int x = 0; x < width; ++x) {
 			float score = scoresData[1 * width * height + y * width + x];
-			if (score < P_THRESHOLD) {
+			if (score < pThreshold_) {
 				continue;
 			}
 			Face face;

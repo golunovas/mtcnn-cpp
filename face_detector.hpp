@@ -36,18 +36,26 @@ private:
     boost::shared_ptr< caffe::Net<float> > rNet_;
 	boost::shared_ptr< caffe::Net<float> > oNet_;
 	boost::shared_ptr< caffe::Net<float> > lNet_;
+	float pThreshold_;
+	float rThreshold_;
+	float oThreshold_;
 	void initNetInput(boost::shared_ptr< caffe::Net<float> > net, cv::Mat img);
 	void initNetInput(boost::shared_ptr< caffe::Net<float> > net, std::vector<cv::Mat>& imgs);
 	std::vector<Face> step1(cv::Mat img, float minFaceSize, float scaleFactor);
 	std::vector<Face> step2(cv::Mat img, const std::vector<Face>& faces);
 	std::vector<Face> step3(cv::Mat img, const std::vector<Face>& faces);
 	std::vector<Face> step4(cv::Mat img, const std::vector<Face>& faces);
-	static std::vector<Face> nonMaximumSuppression(std::vector<Face> faces, float threshold, bool useMin = false);
-	static std::vector<Face> composeFaces(const caffe::Blob<float>* regressionsBlob, 
+	std::vector<Face> composeFaces(const caffe::Blob<float>* regressionsBlob, 
 										   const caffe::Blob<float>* scoresBlob,
 										   float scale);
+	static std::vector<Face> nonMaximumSuppression(std::vector<Face> faces, float threshold, bool useMin = false);
 public:
-	FaceDetector(const std::string& modelDir, bool useGPU = true, int deviceID = 0);
+	FaceDetector(const std::string& modelDir, 
+				 float pThreshold = 0.6f, 
+				 float rThreshold = 0.7f, 
+				 float oThreshold = 0.7f, 
+				 bool useGPU = true, 
+				 int deviceID = 0);
 	std::vector<Face> detect(cv::Mat img, float minFaceSize, float scaleFactor);
 };
 
