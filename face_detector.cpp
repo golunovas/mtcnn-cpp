@@ -2,7 +2,7 @@
 #include "helpers.hpp"
 
 const std::string P_NET_PROTO = "/det1.prototxt";
-const std::string P_NET_WEIGhTS = "/det1.caffemodel";
+const std::string P_NET_WEIGHTS = "/det1.caffemodel";
 const std::string P_NET_REGRESSION_BLOB_NAME = "conv4-2";
 const std::string P_NET_SCORE_BLOB_NAME = "prob1";
 const float P_NET_WINDOW_SIDE = 12.f;
@@ -10,13 +10,13 @@ const float P_THRESHOLD = 0.6f;
 const int P_NET_STRIDE = 2;
 
 const std::string R_NET_PROTO = "/det2.prototxt";
-const std::string R_NET_WEIGhTS = "/det2.caffemodel";
+const std::string R_NET_WEIGHTS = "/det2.caffemodel";
 const std::string R_NET_REGRESSION_BLOB_NAME = "conv5-2";
 const std::string R_NET_SCORE_BLOB_NAME = "prob1";
 const float R_THRESHOLD = 0.7f;
 
 const std::string O_NET_PROTO = "/det3.prototxt";
-const std::string O_NET_WEIGhTS = "/det3.caffemodel";
+const std::string O_NET_WEIGHTS = "/det3.caffemodel";
 const std::string O_NET_REGRESSION_BLOB_NAME = "conv6-2";
 const std::string O_NET_SCORE_BLOB_NAME = "prob1";
 const float O_THRESHOLD = 0.7f;
@@ -26,11 +26,11 @@ const float IMG_INV_STDDEV = 0.0078125f;
 
 FaceDetector::FaceDetector(const std::string& modelDir) {
 	pNet_.reset( new caffe::Net<float> (modelDir + P_NET_PROTO, caffe::TEST) );
-    pNet_->CopyTrainedLayersFrom(modelDir + P_NET_WEIGhTS);
+    pNet_->CopyTrainedLayersFrom(modelDir + P_NET_WEIGHTS);
     rNet_.reset( new caffe::Net<float> (modelDir + R_NET_PROTO, caffe::TEST) );
-    rNet_->CopyTrainedLayersFrom(modelDir + R_NET_WEIGhTS);
+    rNet_->CopyTrainedLayersFrom(modelDir + R_NET_WEIGHTS);
     oNet_.reset( new caffe::Net<float> (modelDir + O_NET_PROTO, caffe::TEST) );
-	oNet_->CopyTrainedLayersFrom(modelDir + O_NET_WEIGhTS);
+	oNet_->CopyTrainedLayersFrom(modelDir + O_NET_WEIGHTS);
 }
 
 void FaceDetector::detect(cv::Mat img, float minFaceSize, float scaleFactor) {
