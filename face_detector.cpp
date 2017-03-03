@@ -35,15 +35,22 @@ FaceDetector::FaceDetector(const std::string& modelDir) {
 }
 
 void FaceDetector::detect(cv::Mat img, float minFaceSize, float scaleFactor) {
-	cv::cvtColor(img, img, CV_BGR2RGB);
-	// TODO make sure img is RGB
-	img.convertTo(img, CV_32FC3);
-	img = img.t();
-	std::vector<Face> faces = step1(img, minFaceSize, scaleFactor);
-	faces = step2(img, faces);
-	faces = step3(img, faces);
+	cv::Mat rgbImg;
+	if (img.channels() == 3) {
+		cv::cvtColor(img, rgbImg, CV_BGR2RGB);
+	} else if (img.channels() == 4) {
+		cv::cvtColor(img, rgbImg, CV_BGRA2RGB);
+	}
+	if (rgbImg.empty()) {
+		return;
+	}
+	rgbImg.convertTo(rgbImg, CV_32FC3);
+	rgbImg = rgbImg.t();
+	std::vector<Face> faces = step1(rgbImg, minFaceSize, scaleFactor);
+	faces = step2(rgbImg, faces);
+	faces = step3(rgbImg, faces);
 	for (size_t i = 0; i < faces.size(); ++i) {
-		drawAndShowRectangle(img, faces[i].bbox.getRect());
+		drawAndShowRectangle(rgbImg, faces[i].bbox.getRect());
 	}
 }
 
