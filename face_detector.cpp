@@ -26,7 +26,7 @@ const std::string L_NET_WEIGHTS = "/det4.caffemodel";
 const float L_THRESHOLD = 0.35f;
 
 const float IMG_MEAN = 127.5f;
-const float IMG_INV_STDDEV = 0.0078125f;
+const float IMG_INV_STDDEV = 1.f / 128.f;
 
 FaceDetector::FaceDetector(const std::string& modelDir, 
 							float pThreshold, 
@@ -121,10 +121,10 @@ std::vector<Face> FaceDetector::step1(cv::Mat img, float minFaceSize, float scal
 	float faceSize = minFaceSize;
 	while (faceSize <= maxFaceSize) {
 		float currentScale = (P_NET_WINDOW_SIDE) / faceSize;
-		int imgheight = img.rows * currentScale;
-		int imgWidth = img.cols * currentScale;
+		int imgHeight = std::ceil(img.rows * currentScale);
+		int imgWidth = std::ceil(img.cols * currentScale);
 		cv::Mat resizedImg;
-		cv::resize(img, resizedImg, cv::Size(imgWidth, imgheight));
+		cv::resize(img, resizedImg, cv::Size(imgWidth, imgHeight), 0, 0, cv::INTER_AREA);
 		initNetInput(pNet_, resizedImg);
 
 		pNet_->Forward();
@@ -149,7 +149,7 @@ std::vector<Face> FaceDetector::step2(cv::Mat img, const std::vector<Face>& face
 	cv::Size windowSize = cv::Size(rNet_->input_blobs()[0]->width(), rNet_->input_blobs()[0]->height());
 	for (size_t i = 0; i < faces.size(); ++i) {
 		cv::Mat sample = cropImage(img, faces[i].bbox.getRect());
-		cv::resize(sample, sample, windowSize);
+		cv::resize(sample, sample, windowSize, 0, 0, cv::INTER_AREA);
 		initNetInput(rNet_, sample);
 		rNet_->Forward();
 		const caffe::Blob<float>* regressionBlob = rNet_->blob_by_name(R_NET_REGRESSION_BLOB_NAME).get();
@@ -178,7 +178,7 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 	cv::Size windowSize = cv::Size(oNet_->input_blobs()[0]->width(), oNet_->input_blobs()[0]->height());
 	for (size_t i = 0; i < faces.size(); ++i) {
 		cv::Mat sample = cropImage(img, faces[i].bbox.getRect());
-		cv::resize(sample, sample, windowSize);
+		cv::resize(sample, sample, windowSize, 0, 0, cv::INTER_AREA);
 		initNetInput(oNet_, sample);
 		oNet_->Forward();
 		const caffe::Blob<float>* regressionBlob = oNet_->blob_by_name(O_NET_REGRESSION_BLOB_NAME).get();
@@ -197,8 +197,8 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 		face.score = score;
 		const float* ptsData = ptsBlob->cpu_data();
 		for (int p = 0; p < NUM_PTS; ++p) {
-			face.ptsCoords[2 * p + 1] = face.bbox.y1 + ptsData[p] * (face.bbox.y2 - face.bbox.y1) - 1;
-			face.ptsCoords[2 * p] = face.bbox.x1 + ptsData[p + NUM_PTS] * (face.bbox.x2 - face.bbox.x1) - 1;
+			face.ptsCoords[2 * p + 1] = face.bbox.y1 + ptsData[p] * (face.bbox.y2 - face.bbox.y1 + 1) - 1;
+			face.ptsCoords[2 * p] = face.bbox.x1 + ptsData[p + NUM_PTS] * (face.bbox.x2 - face.bbox.x1 + 1) - 1;
 		}
 		finalFaces.push_back(face);
 	}
@@ -221,7 +221,7 @@ std::vector<Face> FaceDetector::step4(cv::Mat img, const std::vector<Face>& face
 			float patchY = faces[i].ptsCoords[2 * p + 1] - 0.5f * patchHeight;
 			cv::Rect patch(patchX, patchY, patchWidth, patchHeight);
 			cv::Mat sample = cropImage(img, patch);
-			cv::resize(sample, sample, windowSize);
+			cv::resize(sample, sample, windowSize, 0, 0, cv::INTER_AREA);
 			samples.push_back(sample);
 			patches.push_back(patch);
 		}
@@ -276,7 +276,7 @@ std::vector<Face> FaceDetector::nonMaximumSuppression(std::vector<Face> faces, f
 							(faces[idx].bbox.y2 - faces[idx].bbox.y1 + 1);
 			float area2 = (faces[tmpIdx].bbox.x2 - faces[tmpIdx].bbox.x1 + 1) * 
 							(faces[tmpIdx].bbox.y2 - faces[tmpIdx].bbox.y1 + 1);
-			float o = 0;
+			float o = 0.f;
 			if (useMin) {
 				o = interArea / std::min(area1, area2);           
 			} else {
@@ -334,10 +334,10 @@ BBox BBox::getSquare() const {
 	float bboxWidth = x2 - x1;
 	float bboxHeight = y2 - y1;
 	float side = std::max(bboxWidth, bboxHeight);
-	bbox.x1 = x1 + (bboxWidth - side) * 0.5f;
-	bbox.y1 = y1 + (bboxHeight - side) * 0.5f;
-	bbox.x2 = bbox.x1 + side;
-	bbox.y2 = bbox.y1 + side;
+	bbox.x1 = static_cast<int>(x1 + (bboxWidth - side) * 0.5f);
+	bbox.y1 = static_cast<int>(y1 + (bboxHeight - side) * 0.5f);
+	bbox.x2 = static_cast<int>(bbox.x1 + side);
+	bbox.y2 = static_cast<int>(bbox.y1 + side);
 	return bbox;
 }
 
