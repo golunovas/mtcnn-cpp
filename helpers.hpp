@@ -29,7 +29,9 @@ inline cv::Mat cropImage(cv::Mat img, cv::Rect r) {
 	r.width -= dw;
 	int dh = std::abs(std::min(0, img.rows - 1 - (r.y + r.height)));
 	r.height -= dh;
-	img(r).copyTo(m(cv::Range(dy, dy + r.height), cv::Range(dx, dx + r.width)));
+	if (r.width > 0 && r.height > 0) {
+		img(r).copyTo(m(cv::Range(dy, dy + r.height), cv::Range(dx, dx + r.width)));
+	}
 	return m;
 }
 

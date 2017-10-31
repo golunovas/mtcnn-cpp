@@ -29,24 +29,24 @@ const float IMG_MEAN = 127.5f;
 const float IMG_INV_STDDEV = 0.0078125f;
 
 FaceDetector::FaceDetector(const std::string& modelDir, 
-						   float pThreshold, 
-						   float rThreshold, 
-						   float oThreshold, 
-						   bool useGPU, 
-						   int deviceID) : pThreshold_(pThreshold), rThreshold_(rThreshold), oThreshold_(oThreshold){
+							float pThreshold, 
+							float rThreshold, 
+							float oThreshold, 
+							bool useGPU, 
+							int deviceID) : pThreshold_(pThreshold), rThreshold_(rThreshold), oThreshold_(oThreshold) {
 	if (useGPU) {
 		caffe::Caffe::set_mode(caffe::Caffe::GPU);
 		caffe::Caffe::SetDevice(deviceID);
 	} else {
 		caffe::Caffe::set_mode(caffe::Caffe::CPU);
 	}
-	pNet_.reset( new caffe::Net<float> (modelDir + P_NET_PROTO, caffe::TEST) );
-    pNet_->CopyTrainedLayersFrom(modelDir + P_NET_WEIGHTS);
-    rNet_.reset( new caffe::Net<float> (modelDir + R_NET_PROTO, caffe::TEST) );
-    rNet_->CopyTrainedLayersFrom(modelDir + R_NET_WEIGHTS);
-    oNet_.reset( new caffe::Net<float> (modelDir + O_NET_PROTO, caffe::TEST) );
+	pNet_.reset( new caffe::Net<float> (modelDir + P_NET_PROTO, caffe::TEST));
+	pNet_->CopyTrainedLayersFrom(modelDir + P_NET_WEIGHTS);
+	rNet_.reset( new caffe::Net<float> (modelDir + R_NET_PROTO, caffe::TEST));
+	rNet_->CopyTrainedLayersFrom(modelDir + R_NET_WEIGHTS);
+	oNet_.reset( new caffe::Net<float> (modelDir + O_NET_PROTO, caffe::TEST));
 	oNet_->CopyTrainedLayersFrom(modelDir + O_NET_WEIGHTS);
-    lNet_.reset( new caffe::Net<float> (modelDir + L_NET_PROTO, caffe::TEST) );
+	lNet_.reset( new caffe::Net<float> (modelDir + L_NET_PROTO, caffe::TEST));
 	lNet_->CopyTrainedLayersFrom(modelDir + L_NET_WEIGHTS);
 }
 
@@ -139,7 +139,7 @@ std::vector<Face> FaceDetector::step1(cv::Mat img, float minFaceSize, float scal
 		faceSize /= scaleFactor;
 	}
 	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f);
-	Face::applyRegression(finalFaces);
+	Face::applyRegression(finalFaces, false);
 	Face::bboxes2Squares(finalFaces);
 	return finalFaces;
 }
@@ -168,7 +168,7 @@ std::vector<Face> FaceDetector::step2(cv::Mat img, const std::vector<Face>& face
 		finalFaces.push_back(face);
 	}
 	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f);
-	Face::applyRegression(finalFaces);
+	Face::applyRegression(finalFaces, true);
 	Face::bboxes2Squares(finalFaces);
 	return finalFaces;
 }
@@ -202,7 +202,7 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 		}
 		finalFaces.push_back(face);
 	}
-	Face::applyRegression(finalFaces);
+	Face::applyRegression(finalFaces, true);
 	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f, true);
 	Face::bboxes2Squares(finalFaces);
 	return finalFaces;
@@ -249,7 +249,7 @@ std::vector<Face> FaceDetector::nonMaximumSuppression(std::vector<Face> faces, f
 		return facesNMS;
 	}
 	std::sort(faces.begin(), faces.end(), [](const Face& f1, const Face& f2) {
-            return f1.score > f2.score;
+		return f1.score > f2.score;
 	});
 	std::vector<int> indices(faces.size());
 	for (size_t i = 0; i < indices.size(); ++i) {
@@ -261,30 +261,31 @@ std::vector<Face> FaceDetector::nonMaximumSuppression(std::vector<Face> faces, f
 		std::vector<int> tmpIndices = indices;
 		indices.clear();
 		for(size_t i = 1; i < tmpIndices.size(); ++i) {
-            int tmpIdx = tmpIndices[i];
-            float interX1 = std::max(faces[idx].bbox.x1, faces[tmpIdx].bbox.x1);
-            float interY1 = std::max(faces[idx].bbox.y1, faces[tmpIdx].bbox.y1);
-            float interX2 = std::min(faces[idx].bbox.x2, faces[tmpIdx].bbox.x2);
-            float interY2 = std::min(faces[idx].bbox.y2, faces[tmpIdx].bbox.y2);
-             
-            float bboxWidth = std::max(0.f, (interX2 - interX1 + 1));
-            float bboxHeight = std::max(0.f, (interY2 - interY1 + 1));
-            
-            float interArea = bboxWidth * bboxHeight;
-            float area1 = (faces[idx].bbox.x2 - faces[idx].bbox.x1 + 1) * 
-            				(faces[idx].bbox.y2 - faces[idx].bbox.y1 + 1);
-            float area2 = (faces[tmpIdx].bbox.x2 - faces[tmpIdx].bbox.x1 + 1) * 
-            				(faces[tmpIdx].bbox.y2 - faces[tmpIdx].bbox.y1 + 1);
-            float o = 0;
-            if (useMin) {
-            	o = interArea / std::min(area1, area2);           
-            } else {
-            	o = interArea / (area1 + area2 - interArea);
-            }
-            if(o <= threshold) {
-                indices.push_back(tmpIdx);
-            }
-        }
+			int tmpIdx = tmpIndices[i];
+			float interX1 = std::max(faces[idx].bbox.x1, faces[tmpIdx].bbox.x1);
+			float interY1 = std::max(faces[idx].bbox.y1, faces[tmpIdx].bbox.y1);
+			float interX2 = std::min(faces[idx].bbox.x2, faces[tmpIdx].bbox.x2);
+			float interY2 = std::min(faces[idx].bbox.y2, faces[tmpIdx].bbox.y2);
+			 
+			float bboxWidth = std::max(0.f, (interX2 - interX1 + 1));
+			float bboxHeight = std::max(0.f, (interY2 - interY1 + 1));
+
+			float interArea = bboxWidth * bboxHeight;
+			// TODO: compute outside the loop
+			float area1 = (faces[idx].bbox.x2 - faces[idx].bbox.x1 + 1) * 
+							(faces[idx].bbox.y2 - faces[idx].bbox.y1 + 1);
+			float area2 = (faces[tmpIdx].bbox.x2 - faces[tmpIdx].bbox.x1 + 1) * 
+							(faces[tmpIdx].bbox.y2 - faces[tmpIdx].bbox.y1 + 1);
+			float o = 0;
+			if (useMin) {
+				o = interArea / std::min(area1, area2);           
+			} else {
+				o = interArea / (area1 + area2 - interArea);
+			}
+			if(o <= threshold) {
+			    indices.push_back(tmpIdx);
+			}
+		}
 	}
 	return facesNMS;
 }
@@ -330,24 +331,24 @@ cv::Rect BBox::getRect() const {
 
 BBox BBox::getSquare() const {
 	BBox bbox;
-    float bboxWidth = x2 - x1;
-    float bboxHeight = y2 - y1;
-    float side = std::max(bboxWidth, bboxHeight);
-    bbox.x1 = x1 + (bboxWidth - side) * 0.5f;
-    bbox.y1 = y1 + (bboxHeight - side) * 0.5f;
-    bbox.x2 = bbox.x1 + side;
-    bbox.y2 = bbox.y1 + side;
-    return bbox;
+	float bboxWidth = x2 - x1;
+	float bboxHeight = y2 - y1;
+	float side = std::max(bboxWidth, bboxHeight);
+	bbox.x1 = x1 + (bboxWidth - side) * 0.5f;
+	bbox.y1 = y1 + (bboxHeight - side) * 0.5f;
+	bbox.x2 = bbox.x1 + side;
+	bbox.y2 = bbox.y1 + side;
+	return bbox;
 }
 
-void Face::applyRegression(std::vector<Face>& faces) {
+void Face::applyRegression(std::vector<Face>& faces, bool addOne) {
 	for (size_t i = 0; i < faces.size(); ++i) {
-		float bboxWidth = faces[i].bbox.x2 - faces[i].bbox.x1 ;
-        float bboxHeight = faces[i].bbox.y2 - faces[i].bbox.y1;
-        faces[i].bbox.x1 = faces[i].bbox.x1 + faces[i].regression[1] * bboxWidth;
-        faces[i].bbox.y1 = faces[i].bbox.y1 + faces[i].regression[0] * bboxHeight;
-        faces[i].bbox.x2 = faces[i].bbox.x2 + faces[i].regression[3] * bboxWidth;
-        faces[i].bbox.y2 = faces[i].bbox.y2 + faces[i].regression[2] * bboxHeight;
+		float bboxWidth = faces[i].bbox.x2 - faces[i].bbox.x1 + static_cast<float>(addOne);
+		float bboxHeight = faces[i].bbox.y2 - faces[i].bbox.y1 + static_cast<float>(addOne);
+		faces[i].bbox.x1 = faces[i].bbox.x1 + faces[i].regression[1] * bboxWidth;
+		faces[i].bbox.y1 = faces[i].bbox.y1 + faces[i].regression[0] * bboxHeight;
+		faces[i].bbox.x2 = faces[i].bbox.x2 + faces[i].regression[3] * bboxWidth;
+		faces[i].bbox.y2 = faces[i].bbox.y2 + faces[i].regression[2] * bboxHeight;
 	}
 }
 

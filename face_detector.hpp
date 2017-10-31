@@ -26,14 +26,14 @@ struct Face {
 	float score;
 	float ptsCoords[2 * NUM_PTS];
 	
-	static void applyRegression(std::vector<Face>& faces);
+	static void applyRegression(std::vector<Face>& faces, bool addOne = false);
 	static void bboxes2Squares(std::vector<Face>& faces);
 };
 
 class FaceDetector {
 private:
 	boost::shared_ptr< caffe::Net<float> > pNet_;
-    boost::shared_ptr< caffe::Net<float> > rNet_;
+	boost::shared_ptr< caffe::Net<float> > rNet_;
 	boost::shared_ptr< caffe::Net<float> > oNet_;
 	boost::shared_ptr< caffe::Net<float> > lNet_;
 	float pThreshold_;
