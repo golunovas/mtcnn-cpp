@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv) {
 	Timer timer;
-	mtcnn::FaceDetector fd("./model/", 0.6f, 0.7f, 0.7f, true, 0);
+	mtcnn::FaceDetector fd("./model/", 0.6f, 0.7f, 0.7f, true, false, 0);
 	cv::Mat img = cv::imread("test.jpg");
 	timer.start();
 	std::vector<mtcnn::Face> faces = fd.detect(img, 40.f, 0.709f);
