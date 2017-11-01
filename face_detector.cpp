@@ -32,8 +32,12 @@ FaceDetector::FaceDetector(const std::string& modelDir,
 							float pThreshold, 
 							float rThreshold, 
 							float oThreshold, 
+							bool useLNet,
 							bool useGPU, 
-							int deviceID) : pThreshold_(pThreshold), rThreshold_(rThreshold), oThreshold_(oThreshold) {
+							int deviceID) : pThreshold_(pThreshold), 
+											rThreshold_(rThreshold), 
+											oThreshold_(oThreshold),
+											useLNet_(useLNet) {
 	if (useGPU) {
 		caffe::Caffe::set_mode(caffe::Caffe::GPU);
 		caffe::Caffe::SetDevice(deviceID);
@@ -46,8 +50,10 @@ FaceDetector::FaceDetector(const std::string& modelDir,
 	rNet_->CopyTrainedLayersFrom(modelDir + R_NET_WEIGHTS);
 	oNet_.reset( new caffe::Net<float> (modelDir + O_NET_PROTO, caffe::TEST));
 	oNet_->CopyTrainedLayersFrom(modelDir + O_NET_WEIGHTS);
-	lNet_.reset( new caffe::Net<float> (modelDir + L_NET_PROTO, caffe::TEST));
-	lNet_->CopyTrainedLayersFrom(modelDir + L_NET_WEIGHTS);
+	if (useLNet_) {
+		lNet_.reset( new caffe::Net<float> (modelDir + L_NET_PROTO, caffe::TEST));
+		lNet_->CopyTrainedLayersFrom(modelDir + L_NET_WEIGHTS);
+	}
 }
 
 std::vector<Face> FaceDetector::detect(cv::Mat img, float minFaceSize, float scaleFactor) {
@@ -65,7 +71,9 @@ std::vector<Face> FaceDetector::detect(cv::Mat img, float minFaceSize, float sca
 	std::vector<Face> faces = step1(rgbImg, minFaceSize, scaleFactor);
 	faces = step2(rgbImg, faces);
 	faces = step3(rgbImg, faces);
-	faces = step4(rgbImg, faces);
+	if (useLNet_) {
+		faces = step4(rgbImg, faces);
+	}
 	for (size_t i = 0; i < faces.size(); ++i) {
 		BBox recoveredBBox;
 		recoveredBBox.x1 = faces[i].bbox.y1;
@@ -197,14 +205,13 @@ std::vector<Face> FaceDetector::step3(cv::Mat img, const std::vector<Face>& face
 		face.score = score;
 		const float* ptsData = ptsBlob->cpu_data();
 		for (int p = 0; p < NUM_PTS; ++p) {
-			face.ptsCoords[2 * p + 1] = face.bbox.y1 + ptsData[p] * (face.bbox.y2 - face.bbox.y1 + 1) - 1;
 			face.ptsCoords[2 * p] = face.bbox.x1 + ptsData[p + NUM_PTS] * (face.bbox.x2 - face.bbox.x1 + 1) - 1;
+			face.ptsCoords[2 * p + 1] = face.bbox.y1 + ptsData[p] * (face.bbox.y2 - face.bbox.y1 + 1) - 1;
 		}
 		finalFaces.push_back(face);
 	}
 	Face::applyRegression(finalFaces, true);
 	finalFaces = FaceDetector::nonMaximumSuppression(finalFaces, 0.7f, true);
-	Face::bboxes2Squares(finalFaces);
 	return finalFaces;
 }
 
@@ -215,11 +222,14 @@ std::vector<Face> FaceDetector::step4(cv::Mat img, const std::vector<Face>& face
 		std::vector<cv::Mat> samples;
 		std::vector<cv::Rect> patches;
 		for (int p = 0; p < NUM_PTS; ++p) {
-			float patchWidth = 0.25f *(faces[i].bbox.x2 - faces[i].bbox.x1);
-			float patchHeight = 0.25f * (faces[i].bbox.y2 - faces[i].bbox.y1);
-			float patchX = faces[i].ptsCoords[2 * p] - 0.5f * patchWidth;
-			float patchY = faces[i].ptsCoords[2 * p + 1] - 0.5f * patchHeight;
-			cv::Rect patch(patchX, patchY, patchWidth, patchHeight);
+			float maxSide = std::max(faces[i].bbox.x2 - faces[i].bbox.x1, faces[i].bbox.y2 - faces[i].bbox.y1);
+			int patchSide = std::floor(0.25f *(maxSide + 1));
+			if (patchSide % 2 == 1) { 
+				++patchSide;
+			}
+			int patchX = std::floor(faces[i].ptsCoords[2 * p] - 0.5f * patchSide);
+			int patchY = std::floor(faces[i].ptsCoords[2 * p + 1] - 0.5f * patchSide);
+			cv::Rect patch(patchX, patchY, patchSide, patchSide);
 			cv::Mat sample = cropImage(img, patch);
 			cv::resize(sample, sample, windowSize, 0, 0, cv::INTER_AREA);
 			samples.push_back(sample);
@@ -233,7 +243,7 @@ std::vector<Face> FaceDetector::step4(cv::Mat img, const std::vector<Face>& face
 			const float* regressionData = regressionBlob->cpu_data();
 			float dx = regressionData[1];
 			float dy = regressionData[0];
-			if (std::abs(dx - 0.5f) <= L_THRESHOLD && std::abs(dy - 0.5f) <= L_THRESHOLD) { 
+			if (std::abs(dx - 0.5f) < L_THRESHOLD && std::abs(dy - 0.5f) < L_THRESHOLD) { 
 				face.ptsCoords[2 * p] += dx * patches[p].width - 0.5f * patches[p].width;
 				face.ptsCoords[2 * p + 1] += dy * patches[p].height - 0.5f * patches[p].height;
 			}

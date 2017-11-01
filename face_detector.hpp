@@ -36,6 +36,7 @@ private:
 	boost::shared_ptr< caffe::Net<float> > rNet_;
 	boost::shared_ptr< caffe::Net<float> > oNet_;
 	boost::shared_ptr< caffe::Net<float> > lNet_;
+	bool useLNet_;
 	float pThreshold_;
 	float rThreshold_;
 	float oThreshold_;
@@ -53,8 +54,9 @@ public:
 	FaceDetector(const std::string& modelDir, 
 				 float pThreshold = 0.6f, 
 				 float rThreshold = 0.7f, 
-				 float oThreshold = 0.7f, 
-				 bool useGPU = true, 
+				 float oThreshold = 0.7f,
+				 bool useLNet = true, 
+				 bool useGPU = false, 
 				 int deviceID = 0);
 	std::vector<Face> detect(cv::Mat img, float minFaceSize, float scaleFactor);
 };
