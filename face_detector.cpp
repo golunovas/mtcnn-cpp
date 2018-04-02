@@ -88,7 +88,7 @@ void FaceDetector::initNetInput(boost::shared_ptr< caffe::Net<float> > net, cv::
 	std::vector<cv::Mat> channels;
 	cv::split(img, channels);	
 	caffe::Blob<float>* inputLayer = net->input_blobs()[0];
-	assert(inputLayer->channels() == channels.size());
+	assert(inputLayer->channels() == static_cast<int>(channels.size()));
 	if (img.rows != inputLayer->height() || img.cols != inputLayer->width()) {
 		inputLayer->Reshape(1, channels.size(), img.rows, img.cols);
 		net->Reshape();

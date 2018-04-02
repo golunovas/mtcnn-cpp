@@ -2,7 +2,7 @@
 #include "face_detector.hpp"
 #include "helpers.hpp"
 
-int main(int argc, char** argv) {
+int main() {
 	Timer timer;
 	mtcnn::FaceDetector fd("./model/", 0.6f, 0.7f, 0.7f, true, false, 0);
 	cv::Mat img = cv::imread("test.jpg");

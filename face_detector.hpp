@@ -36,10 +36,10 @@ private:
 	boost::shared_ptr< caffe::Net<float> > rNet_;
 	boost::shared_ptr< caffe::Net<float> > oNet_;
 	boost::shared_ptr< caffe::Net<float> > lNet_;
-	bool useLNet_;
 	float pThreshold_;
 	float rThreshold_;
 	float oThreshold_;
+	bool useLNet_;
 	void initNetInput(boost::shared_ptr< caffe::Net<float> > net, cv::Mat img);
 	void initNetInput(boost::shared_ptr< caffe::Net<float> > net, std::vector<cv::Mat>& imgs);
 	std::vector<Face> step1(cv::Mat img, float minFaceSize, float scaleFactor);
